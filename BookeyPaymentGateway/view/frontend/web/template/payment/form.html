@@ -1,0 +1,113 @@
+<!DOCTYPE html> 
+<html lang="en"> 
+    <head> 
+        <meta charset="utf-8"> 
+        <meta name="viewport" content="width=device-width, initial-scale=1.0"> 
+        <title>Checkout Frames v2</title> 
+        <style> 
+        *,*::after, *::before { box-sizing: border-box } 
+        html { padding: 1rem; background-color: #FFF; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, 'Open Sans', 'Helvetica Neue', sans-serif } 
+        #payment-form { width: 31.5rem; margin: 0 auto } 
+        iframe { width: 100% } 
+        .one-liner { display: flex; flex-direction: column } 
+        #pay-button { border: none; border-radius: 3px; color: #FFF; font-weight: 500; height: 40px; width: 100%; background-color: RED; box-shadow: 0 1px 3px 0 rgba(19, 57, 94, 0.4) } 
+        #pay-button:active { background-color: #0B2A49; box-shadow: 0 1px 3px 0 rgba(19, 57, 94, 0.4) } 
+        #pay-button:hover { background-color: #15406B; box-shadow: 0 2px 5px 0 rgba(19, 57, 94, 0.4) } 
+        #pay-button:disabled { background-color: #697887; box-shadow: none } 
+        #pay-button:not(:disabled) { cursor: pointer } 
+        .card-frame { border: solid 1px #13395E; border-radius: 3px; width: 120%; margin-bottom: 8px; height: 40px; box-shadow: 0 1px 3px 0 rgba(19, 57, 94, 0.2) } .card-frame.frame--rendered { opacity: 1 } .card-frame.frame--rendered.frame--focus { border: solid 1px #13395E; box-shadow: 0 2px 5px 0 rgba(19, 57, 94, 0.15) } .card-frame.frame--rendered.frame--invalid { border: solid 1px #D96830; box-shadow: 0 2px 5px 0 rgba(217, 104, 48, 0.15) } .success-payment-message { color: #13395E; line-height: 1.4 } .token { color: #b35e14; font-size: 0.9rem; font-family: monospace } @media screen and (min-width: 31rem) { .one-liner { flex-direction: row } .card-frame { width: 100%; margin-bottom: 0 } #pay-button { width: 175px; margin-left: 8px } } 
+        </style> 
+    </head> 
+    <body> 
+        <!-- add frames script --> 
+        <script src="https://cdn.checkout.com/js/framesv2.min.js"></script> 
+        <div class="payment-method" data-bind="css: {'_active': (getCode() == isChecked())}">
+          <div class="payment-method-title field choice">
+              <input type="radio"
+                     name="payment[method]"
+                     class="radio"
+                     data-bind="attr: {'id': getCode()}, value: getCode(), checked: isChecked, click: selectPaymentMethod, visible: isRadioButtonVisible()"/>
+              <label class="label" data-bind="attr: {'for': getCode()}">
+                  <span data-bind="text: getTitle()"></span>
+              </label>
+          </div>
+          <div class="payment-method-content">
+              <div class="payment-method-note" data-bind="text: getDescription()"></div>
+          </div>
+      
+            <div class="payment-method-content">    
+                  
+                  <form id="payment-form" method="POST" action="charge.php">
+                    <div>
+                      <div class="card-frame frame--activated">
+                        <!-- form will be added here -->
+                        <iframe src="https://js.checkout.com/framesv2/?v=2.13.0&amp;publicKey=pk_test_934238f0-0858-43d5-a109-f2fb18f0291a&amp;payOut=false&amp;iOS=false&amp;safari=false&amp;lng=en-gb" id="singleIframe" style="width: 100%;height: 100%;background: transparent;overflow: hidden;display: block;border: 0 none transparent;margin: 0;padding: 0;position: static;-webkit-tap-highlight-color: transparent;"></iframe>
+                    </div>
+                      <!-- add submit button -->  
+                      <button id="pay-button">
+                        PAY
+                      </button>
+                    </div>
+                    <p class="success-payment-message"></p>
+                  </form>
+               
+                <div class="payment-method-billing-address">
+                    <!-- ko foreach: $parent.getRegion(getBillingAddressFormName()) -->
+                    <!-- ko template: getTemplate() --><!-- /ko -->
+                    <!--/ko-->
+                </div>
+                
+                <div class="checkout-agreements-block">
+                    <!-- ko foreach: $parent.getRegion('before-place-order') -->
+                    <!-- ko template: getTemplate() --><!-- /ko -->
+                    <!--/ko-->
+                </div>
+
+                <div class="actions-toolbar">
+                    <div class="primary">
+                        <button class="action primary checkout"
+                                type="submit"
+                                data-bind="
+                                click: placeOrder,
+                                attr: {title: $t('Place Order')}
+                                ">
+                            <span data-bind="i18n: 'Place Order'"></span>
+                        </button>
+                    </div>
+                </div>
+                
+            </div>
+        </div>
+        
+        <script>
+            var payButton = document.getElementById("pay-button");
+            var form = document.getElementById("payment-form");
+        
+            Frames.init("pk_test_934238f0-0858-43d5-a109-f2fb18f0291a");
+        
+            Frames.addEventHandler(
+              Frames.Events.CARD_VALIDATION_CHANGED,
+              function (event) {
+                console.log("CARD_VALIDATION_CHANGED: %o", event);
+        
+                payButton.disabled = !Frames.isCardValid();
+              }
+            );
+        
+            Frames.addEventHandler(
+              Frames.Events.CARD_TOKENIZED,
+              function (event) {
+                var el = document.querySelector(".success-payment-message");
+                el.innerHTML = "Card tokenization completed<br>" +
+                  "Your card token is: <span class=\"token\">" + event.token + "</span>";
+              }
+            );
+        
+            form.addEventListener("submit", function (event) {
+               payButton.disabled = true // disables pay button once submitted
+              event.preventDefault();
+              Frames.submitCard();
+            });
+          </script>
+    </body> 
+</html>

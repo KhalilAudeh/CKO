@@ -1,0 +1,104 @@
+<?xml version="1.0"?>
+<!--
+/**
+ * Copyright © 2013-2017 Magento, Inc. All rights reserved.
+ * See COPYING.txt for license details.
+ */
+-->
+<config xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="urn:magento:framework:ObjectManager/etc/config.xsd">
+    <!-- Payment Method Facade configuration -->
+    <virtualType name="BookeyPaymentGatewayFacade" type="Magento\Payment\Model\Method\Adapter">
+        <arguments>
+            <argument name="code" xsi:type="const">Bookey\BookeyPaymentGateway\Gateway\Config\Config::CODE</argument>
+            <argument name="formBlockType" xsi:type="string">Magento\Payment\Block\Form</argument>
+            <argument name="infoBlockType" xsi:type="string">Bookey\BookeyPaymentGateway\Block\Info</argument>
+            <argument name="valueHandlerPool" xsi:type="object">BookeyPaymentGatewayValueHandlerPool</argument>
+            <argument name="commandPool" xsi:type="object">BookeyPaymentGatewayCommandPool</argument>
+        </arguments>
+    </virtualType>
+
+    <!-- Configuration reader -->
+    <type name="Bookey\BookeyPaymentGateway\Gateway\Config\Config">
+        <arguments>
+            <argument name="methodCode" xsi:type="const">Bookey\BookeyPaymentGateway\Gateway\Config\Config::CODE</argument>
+        </arguments>
+    </type>
+
+    <!-- Commands infrastructure -->
+    <virtualType name="BookeyPaymentGatewayCommandPool" type="Magento\Payment\Gateway\Command\CommandPool">
+        <arguments>
+            <argument name="commands" xsi:type="array">
+                <item name="initialize" xsi:type="string">BookeyPaymentGatewayInitializeCommand</item>
+                <item name="refund" xsi:type="string">BookeyPaymentGatewayRefundCommand</item>
+            </argument>
+        </arguments>
+    </virtualType>
+
+    <!-- Initialize command -->
+    <virtualType name="BookeyPaymentGatewayInitializeCommand" type="Magento\Payment\Gateway\Command\GatewayCommand">
+        <arguments>
+            <argument name="requestBuilder" xsi:type="object">BookeyPaymentGatewayInitializationRequest</argument>
+            <argument name="transferFactory" xsi:type="object">Bookey\BookeyPaymentGateway\Gateway\Http\DummyTransferFactory</argument> <!-- [Payment/Model/Method/Adapter][executeCommand]ERROR!Cannot instantiate interface Magento\Payment\Gateway\Http\TransferFactoryInterface if empty -->
+            <argument name="client" xsi:type="object">Bookey\BookeyPaymentGateway\Gateway\Http\Client\DummyClient</argument> <!-- [Payment/Model/Method/Adapter][executeCommand]ERROR getting command!Cannot instantiate interface Magento\Payment\Gateway\Http\ClientInterface if empty-->
+        </arguments>
+    </virtualType>
+
+    <!-- Refund command -->
+    <virtualType name="BookeyPaymentGatewayRefundCommand" type="Magento\Payment\Gateway\Command\GatewayCommand">
+        <arguments>
+            <argument name="requestBuilder" xsi:type="object">BookeyPaymentGatewayRefundRequest</argument>
+            <argument name="transferFactory" xsi:type="object">Bookey\BookeyPaymentGateway\Gateway\Http\DummyTransferFactory</argument> <!-- [Payment/Model/Method/Adapter][executeCommand]ERROR!Cannot instantiate interface Magento\Payment\Gateway\Http\TransferFactoryInterface if empty -->
+            <argument name="handler" xsi:type="object">Bookey\BookeyPaymentGateway\Model\BookeyPayment</argument>
+            <argument name="client" xsi:type="object">Bookey\BookeyPaymentGateway\Gateway\Http\Client\RefundClient</argument> <!-- [Payment/Model/Method/Adapter][executeCommand]ERROR getting command!Cannot instantiate interface Magento\Payment\Gateway\Http\ClientInterface if empty-->
+        </arguments>
+    </virtualType>
+
+    <!-- Initialization Request -->
+    <virtualType name="BookeyPaymentGatewayInitializationRequest" type="Magento\Payment\Gateway\Request\BuilderComposite">
+        <arguments>
+            <argument name="builders" xsi:type="array">
+                <item name="transaction" xsi:type="string">Bookey\BookeyPaymentGateway\Gateway\Request\InitializationRequest</item>
+            </argument>
+        </arguments>
+    </virtualType>
+
+    <!-- Refund Request -->
+    <virtualType name="BookeyPaymentGatewayRefundRequest" type="Magento\Payment\Gateway\Request\BuilderComposite">
+        <arguments>
+            <argument name="builders" xsi:type="array">
+                <item name="transaction" xsi:type="string">Bookey\BookeyPaymentGateway\Gateway\Request\RefundRequest</item>
+            </argument>
+        </arguments>
+    </virtualType>
+
+    <type name="Bookey\BookeyPaymentGateway\Gateway\Request\InitializationRequest">
+        <arguments>
+            <argument name="config" xsi:type="object">Bookey\BookeyPaymentGateway\Gateway\Config\Config</argument>
+        </arguments>
+    </type>
+
+    <!-- Value handlers infrastructure -->
+    <virtualType name="BookeyPaymentGatewayValueHandlerPool" type="Magento\Payment\Gateway\Config\ValueHandlerPool">
+        <arguments>
+            <argument name="handlers" xsi:type="array">
+                <item name="default" xsi:type="string">BookeyPaymentGatewayConfigValueHandler</item>
+            </argument>
+        </arguments>
+    </virtualType>
+    <virtualType name="BookeyPaymentGatewayConfigValueHandler" type="Magento\Payment\Gateway\Config\ConfigValueHandler">
+        <arguments>
+            <argument name="configInterface" xsi:type="object">Bookey\BookeyPaymentGateway\Gateway\Config\Config</argument>
+        </arguments>
+    </virtualType>
+
+    <type name="Bookey\BookeyPaymentGateway\Block\Info">
+        <arguments>
+            <argument name="config" xsi:type="object">Bookey\BookeyPaymentGateway\Gateway\Config\Config</argument>
+        </arguments>
+    </type>
+
+    <type name="\Magento\Sales\Model\Order\Email\Sender\OrderSender">
+        <plugin name="Bookey-OrderSender-Plugin" type="Bookey\BookeyPaymentGateway\Plugin\OrderSenderPlugin" />
+    </type>
+
+</config>
